@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/19dz-mwMQCpy6JuxbZfikZyYN52gHsoZD
 """
 
-!pip install pefile
+#!pip install pefile
 
 import pefile
 import hashlib
@@ -67,13 +67,17 @@ def extract_features(file_path):
     features['BitcoinAddresses'] = bitcoin_regex.findall(file_content.decode('utf-8', errors='ignore'))
 
     # Benign (this would normally be provided by your labeled dataset)
-    features['Benign'] = 0  # Example default value
+    #features['Benign'] = 0  # Example default value
 
     return features
 
 # Example usage
 file_path = 'VoicemodInstaller_1.3.3-yoem04.exe' #a single exe is tested just as an example
 features = extract_features(file_path)
+if features['BitcoinAddresses'] == []:
+  features['BitcoinAddresses'] = 0
+else:
+  features['BitcoinAddresses'] = 1
 print(features)
 
 import joblib
@@ -89,9 +93,13 @@ with open('data.csv', 'w') as f:
 import pandas as pd
 df = pd.read_csv('data.csv')
 df.head()
-df.drop(['FileName','md5Hash','Benign'], axis=1, inplace=True)
-#df['BitcoinAddresses'] = list(map(int, df['BitcoinAddresses']))     NEEDS ATTENTION !!!
-df = df.assign(BitcoinAddresses=0)
-loaded_model.predict(df.iloc[[0]])
+df.drop(['FileName','md5Hash'], axis=1, inplace=True)
+#df['BitcoinAddresses'] = 0 if df['BitcoinAddresses'].isna().all() else 1
+#print(df)
+res = loaded_model.predict(df.iloc[[0]])
+if res == 0:
+  print("Malicious")
+else:
+  print("Benign")
 # 0- Malicious
 # 1- Benign
